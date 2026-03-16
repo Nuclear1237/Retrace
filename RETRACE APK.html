@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RETRACE — Close the Loop</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-deep: #0d4a1f;
+    --green-mid: #1a6b2e;
+    --green-bright: #2eb84b;
+    --green-neon: #4cff7a;
+    --green-light: #a8f0bc;
+    --white: #f5fdf7;
+    --off-white: #e8f5ec;
+    --gray: #8aab92;
+    --dark: #081c0e;
+    --receipt-bg: #fdfaf5;
+    --receipt-line: #d4c9b0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--green-deep);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── BG TEXTURE ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(78,255,122,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 10% 80%, rgba(30,107,46,0.4) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ═══════════════════════════════════
+     ONBOARDING SCREEN
+  ═══════════════════════════════════ */
+  #screen-onboard {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    gap: 0;
+  }
+
+  .logo-band {
+    width: 100%;
+    max-width: 500px;
+    background: var(--green-mid);
+    border-radius: 20px 20px 0 0;
+    padding: 28px 36px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid rgba(76,255,122,0.15);
+  }
+
+  .logo-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--green-bright);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 8px rgba(46,184,75,0.2);
+  }
+
+  .logo-text h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  .logo-text h1 span { color: var(--green-neon); }
+  .logo-text p {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--green-light);
+    margin-top: 2px;
+  }
+
+  .onboard-card {
+    width: 100%;
+    max-width: 500px;
+    background: rgba(10,30,15,0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(76,255,122,0.12);
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    padding: 36px;
+  }
+
+  .onboard-card h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 1px;
+    color: var(--green-neon);
+    margin-bottom: 6px;
+  }
+  .onboard-card p.sub {
+    color: var(--gray);
+    font-size: 14px;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  .field-group { margin-bottom: 20px; }
+  .field-group label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--green-light);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .field-group input, .field-group select {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(76,255,122,0.2);
+    border-radius: 10px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .field-group input::placeholder { color: rgba(255,255,255,0.25); }
+  .field-group input:focus, .field-group select:focus {
+    border-color: var(--green-neon);
+    background: rgba(76,255,122,0.05);
+  }
+  .field-group select option { background: var(--green-deep); }
+
+  .avatar-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .avatar-btn {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(76,255,122,0.15);
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar-btn:hover, .avatar-btn.selected {
+    border-color: var(--green-neon);
+    background: rgba(76,255,122,0.15);
+    transform: scale(1.1);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--green-bright);
+    color: var(--dark);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.25s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover {
+    background: var(--green-neon);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(76,255,122,0.3);
+  }
+
+  /* ═══════════════════════════════════
+     DASHBOARD
+  ═══════════════════════════════════ */
+  #screen-dashboard {
+    padding: 0;
+    flex-direction: column;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    background: rgba(8,28,14,0.6);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(76,255,122,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+  }
+  .topbar-logo span { color: var(--green-neon); }
+
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(76,255,122,0.08);
+    border: 1px solid rgba(76,255,122,0.2);
+    border-radius: 50px;
+    padding: 6px 14px 6px 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .user-pill:hover { background: rgba(76,255,122,0.14); }
+  .user-avatar-sm {
+    width: 32px; height: 32px;
+    background: var(--green-bright);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .user-pill span { font-size: 13px; font-weight: 500; color: var(--green-light); }
+
+  .dash-content { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* stats row */
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .stat-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(76,255,122,0.12);
+    border-radius: 14px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-card .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px;
+    color: var(--green-neon);
+    line-height: 1;
+  }
+  .stat-card .stat-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--gray);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* section title */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1.5px;
+    color: var(--green-light);
+    margin-bottom: 4px;
+  }
+
+  /* new exchange btn */
+  .btn-exchange {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--green-mid), var(--green-bright));
+    border: 1px solid rgba(76,255,122,0.3);
+    border-radius: 16px;
+    color: var(--white);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.25s;
+    width: 100%;
+  }
+  .btn-exchange:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(46,184,75,0.3);
+  }
+  .btn-exchange .icon { font-size: 26px; }
+
+  /* reward cards */
+  .rewards-scroll {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .rewards-scroll::-webkit-scrollbar { display: none; }
+
+  .reward-card {
+    min-width: 170px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(76,255,122,0.12);
+    border-radius: 16px;
+    padding: 18px 16px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .reward-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: 0.08;
+  }
+  .reward-card:hover {
+    border-color: rgba(76,255,122,0.3);
+    transform: translateY(-3px);
+    background: rgba(76,255,122,0.07);
+  }
+  .reward-card .brand { font-size: 11px; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; }
+  .reward-card .discount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    color: var(--green-neon);
+    line-height: 1;
+    margin: 4px 0 2px;
+  }
+  .reward-card .off { font-size: 12px; color: var(--green-light); }
+  .reward-card .expiry { font-size: 10px; color: var(--gray); margin-top: 10px; font-family: 'Space Mono', monospace; }
+  .reward-card .brand-emoji { font-size: 28px; margin-bottom: 8px; display: block; }
+  .reward-card.locked { opacity: 0.45; }
+  .reward-card.locked::after {
+    content: '🔒';
+    position: absolute;
+    top: 10px; right: 12px;
+    font-size: 14px;
+  }
+
+  /* exchange history */
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(76,255,122,0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .history-item:hover { background: rgba(76,255,122,0.05); border-color: rgba(76,255,122,0.2); }
+  .history-icon {
+    width: 40px; height: 40px;
+    background: rgba(76,255,122,0.1);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .history-info { flex: 1; }
+  .history-info .h-title { font-size: 14px; font-weight: 500; }
+  .history-info .h-date { font-size: 11px; color: var(--gray); font-family: 'Space Mono', monospace; margin-top: 2px; }
+  .history-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--green-neon);
+  }
+  .history-dl {
+    width: 30px; height: 30px;
+    background: rgba(76,255,122,0.1);
+    border: 1px solid rgba(76,255,122,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .history-dl:hover { background: var(--green-bright); }
+
+  /* ═══════════════════════════════════
+     EXCHANGE SCREEN
+  ═══════════════════════════════════ */
+  #screen-exchange {
+    padding: 0;
+  }
+
+  .screen-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(76,255,122,0.1);
+  }
+  .back-btn {
+    width: 38px; height: 38px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(76,255,122,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+  .back-btn:hover { background: rgba(76,255,122,0.1); }
+  .screen-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+  }
+
+  .exchange-form { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  .item-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .item-type-btn {
+    padding: 14px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 2px solid rgba(76,255,122,0.1);
+    border-radius: 12px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .item-type-btn .type-icon { font-size: 24px; }
+  .item-type-btn:hover, .item-type-btn.selected {
+    border-color: var(--green-neon);
+    background: rgba(76,255,122,0.1);
+  }
+
+  .qty-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .qty-btn {
+    width: 40px; height: 40px;
+    background: rgba(76,255,122,0.1);
+    border: 1px solid rgba(76,255,122,0.3);
+    border-radius: 10px;
+    color: var(--green-neon);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .qty-btn:hover { background: rgba(76,255,122,0.2); }
+  .qty-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--white);
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .points-preview {
+    background: rgba(76,255,122,0.07);
+    border: 1px solid rgba(76,255,122,0.2);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .points-preview .pp-label { font-size: 11px; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; }
+  .points-preview .pp-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    color: var(--green-neon);
+    line-height: 1;
+    margin: 4px 0;
+  }
+  .points-preview .pp-sub { font-size: 12px; color: var(--green-light); }
+
+  /* ═══════════════════════════════════
+     RECEIPT SCREEN
+  ═══════════════════════════════════ */
+  #screen-receipt { padding: 0; }
+  .receipt-container { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* the actual paper receipt */
+  #receipt-paper {
+    background: var(--receipt-bg);
+    color: #2a2a1e;
+    border-radius: 4px;
+    padding: 28px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    position: relative;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.4);
+  }
+
+  /* torn edge top */
+  #receipt-paper::before {
+    content: '';
+    display: block;
+    height: 12px;
+    background: radial-gradient(circle at 10px -4px, transparent 8px, var(--receipt-bg) 9px) repeat-x;
+    background-size: 20px 12px;
+    margin: -28px -24px 20px;
+  }
+  /* torn edge bottom */
+  #receipt-paper::after {
+    content: '';
+    display: block;
+    height: 12px;
+    background: radial-gradient(circle at 10px 16px, transparent 8px, var(--receipt-bg) 9px) repeat-x;
+    background-size: 20px 12px;
+    margin: 20px -24px -28px;
+  }
+
+  .receipt-logo-area { text-align: center; margin-bottom: 16px; }
+  .receipt-logo-area .r-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--green-mid);
+    letter-spacing: 2px;
+  }
+  .receipt-logo-area .r-logo span { color: var(--green-bright); }
+  .receipt-logo-area .r-tagline { font-size: 10px; color: #888; letter-spacing: 2px; }
+  .receipt-logo-area .r-icon { font-size: 28px; margin-bottom: 4px; }
+
+  .r-divider {
+    border: none;
+    border-top: 1px dashed var(--receipt-line);
+    margin: 12px 0;
+  }
+  .r-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; }
+  .r-row.bold { font-weight: 700; font-size: 12px; }
+  .r-row.large { font-size: 14px; font-weight: 700; }
+  .r-heading { font-size: 10px; color: #888; letter-spacing: 1px; margin-bottom: 6px; }
+
+  .r-items { margin: 4px 0; }
+  .r-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .r-item-name { flex: 1; }
+  .r-item-pts { color: var(--green-mid); font-weight: 700; }
+
+  .r-qr {
+    text-align: center;
+    margin: 16px 0 8px;
+  }
+  .r-qr canvas, .r-qr svg { width: 100px; height: 100px; }
+  .qr-placeholder {
+    width: 90px; height: 90px;
+    margin: 0 auto;
+    border: 2px solid var(--receipt-line);
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    gap: 2px;
+    padding: 6px;
+  }
+  .qr-cell { background: #2a2a1e; border-radius: 1px; }
+  .qr-cell.empty { background: transparent; }
+
+  .r-coupon-preview {
+    background: #f0f7f2;
+    border: 1px dashed var(--green-mid);
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 8px;
+    text-align: center;
+  }
+  .r-coupon-preview .cp-brand { font-size: 10px; letter-spacing: 2px; color: #555; }
+  .r-coupon-preview .cp-code {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green-mid);
+    letter-spacing: 3px;
+    margin: 4px 0;
+  }
+  .r-coupon-preview .cp-off { font-size: 11px; color: #555; }
+
+  .r-footer { text-align: center; margin-top: 12px; font-size: 9px; color: #aaa; line-height: 1.6; }
+
+  /* download btn */
+  .btn-download {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    background: var(--green-bright);
+    color: var(--dark);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.25s;
+    width: 100%;
+  }
+  .btn-download:hover {
+    background: var(--green-neon);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(76,255,122,0.3);
+  }
+
+  .btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    background: transparent;
+    color: var(--green-light);
+    border: 1px solid rgba(76,255,122,0.2);
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn-secondary:hover { background: rgba(76,255,122,0.07); border-color: rgba(76,255,122,0.35); }
+
+  /* ═══════════════════════════════════
+     REWARDS SCREEN
+  ═══════════════════════════════════ */
+  #screen-rewards { padding: 0; }
+  .rewards-grid { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .reward-full-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(76,255,122,0.12);
+    border-radius: 18px;
+    padding: 20px 16px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .reward-full-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(76,255,122,0.3);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+  }
+  .reward-full-card .bg-glow {
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    filter: blur(20px);
+    opacity: 0.3;
+  }
+  .reward-full-card .rfc-brand { font-size: 10px; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; }
+  .reward-full-card .rfc-emoji { font-size: 32px; margin: 8px 0 6px; display: block; }
+  .reward-full-card .rfc-discount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: var(--green-neon);
+    line-height: 1;
+  }
+  .reward-full-card .rfc-off { font-size: 12px; color: var(--green-light); margin-bottom: 10px; }
+  .reward-full-card .rfc-req { font-size: 10px; color: var(--gray); }
+  .reward-full-card .rfc-code {
+    margin-top: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: rgba(76,255,122,0.1);
+    border: 1px solid rgba(76,255,122,0.2);
+    border-radius: 6px;
+    padding: 5px 8px;
+    color: var(--green-neon);
+    letter-spacing: 2px;
+  }
+  .reward-full-card.locked-card {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .lock-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.3);
+    border-radius: 18px;
+    font-size: 28px;
+  }
+
+  /* ═══════════════════════════════════
+     PROFILE SCREEN
+  ═══════════════════════════════════ */
+  #screen-profile { padding: 0; }
+  .profile-content { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  .profile-hero {
+    background: linear-gradient(135deg, rgba(26,107,46,0.5), rgba(46,184,75,0.15));
+    border: 1px solid rgba(76,255,122,0.15);
+    border-radius: 20px;
+    padding: 28px;
+    text-align: center;
+  }
+  .profile-avatar-lg {
+    width: 80px; height: 80px;
+    background: var(--green-bright);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px;
+    margin: 0 auto 14px;
+    border: 3px solid rgba(76,255,122,0.4);
+    box-shadow: 0 0 0 6px rgba(76,255,122,0.1);
+  }
+  .profile-hero h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: var(--white);
+  }
+  .profile-hero .ph-level {
+    display: inline-block;
+    background: rgba(76,255,122,0.15);
+    border: 1px solid rgba(76,255,122,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--green-neon);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .profile-section {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(76,255,122,0.1);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .profile-section-title {
+    padding: 14px 18px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--gray);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(76,255,122,0.08);
+  }
+  .profile-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-row:hover { background: rgba(76,255,122,0.04); }
+  .profile-row .pr-left { display: flex; align-items: center; gap: 12px; }
+  .profile-row .pr-icon {
+    width: 34px; height: 34px;
+    background: rgba(76,255,122,0.08);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .profile-row .pr-label { font-size: 14px; }
+  .profile-row .pr-value { font-size: 13px; color: var(--gray); }
+
+  .impact-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .impact-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-mid), var(--green-neon));
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+  .impact-grid { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .impact-item .impact-label { font-size: 12px; color: var(--gray); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .impact-item .impact-label span { color: var(--green-neon); font-family: 'Space Mono', monospace; }
+
+  /* ═══════════════════════════════════
+     NAV BAR
+  ═══════════════════════════════════ */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    background: rgba(6,22,10,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(76,255,122,0.1);
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 4px;
+  }
+  .nav-item .nav-icon { font-size: 20px; transition: transform 0.2s; }
+  .nav-item .nav-label { font-size: 10px; letter-spacing: 1px; color: var(--gray); text-transform: uppercase; }
+  .nav-item.active .nav-label { color: var(--green-neon); }
+  .nav-item.active .nav-icon { transform: scale(1.15); }
+  .nav-item:hover .nav-icon { transform: scale(1.1); }
+
+  /* padding for nav */
+  .has-nav { padding-bottom: 80px; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .screen.active { animation: fadeSlideUp 0.35s ease; }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(76,255,122,0.3); }
+    50% { box-shadow: 0 0 0 12px rgba(76,255,122,0); }
+  }
+  .pulse { animation: pulse-glow 2s infinite; }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green-mid);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 200;
+    white-space: nowrap;
+    border: 1px solid rgba(76,255,122,0.3);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── SUCCESS ANIM ─── */
+  .success-flash {
+    animation: successFlash 0.5s ease;
+  }
+  @keyframes successFlash {
+    0% { background: rgba(76,255,122,0.2); }
+    100% { background: transparent; }
+  }
+
+  /* edit name modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--green-deep);
+    border: 1px solid rgba(76,255,122,0.15);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    max-width: 600px;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+
+  /* max width for desktop feel */
+  body { display: flex; justify-content: center; }
+  #app {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ──────────────────────── ONBOARDING ──────────────────────── -->
+<div id="screen-onboard" class="screen active">
+  <div class="logo-band">
+    <div class="logo-icon">♻️</div>
+    <div class="logo-text">
+      <h1><span>RE</span>TRACE</h1>
+      <p>CLOSE THE LOOP. RECLAIM THE FUTURE.</p>
+    </div>
+  </div>
+  <div class="onboard-card">
+    <h2>Welcome, Recycler</h2>
+    <p class="sub">Set up your profile to start earning rewards for every item you exchange.</p>
+
+    <div class="field-group">
+      <label>Your Name</label>
+      <input type="text" id="input-name" placeholder="e.g. Aanya Sharma" maxlength="30">
+    </div>
+
+    <div class="field-group">
+      <label>Choose Your Avatar</label>
+      <div class="avatar-row" id="avatar-row">
+        <button class="avatar-btn selected" data-emoji="🌿" onclick="selectAvatar(this)">🌿</button>
+        <button class="avatar-btn" data-emoji="🌱" onclick="selectAvatar(this)">🌱</button>
+        <button class="avatar-btn" data-emoji="♻️" onclick="selectAvatar(this)">♻️</button>
+        <button class="avatar-btn" data-emoji="🌎" onclick="selectAvatar(this)">🌎</button>
+        <button class="avatar-btn" data-emoji="🍃" onclick="selectAvatar(this)">🍃</button>
+        <button class="avatar-btn" data-emoji="⚡" onclick="selectAvatar(this)">⚡</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Preferred City</label>
+      <select id="input-city">
+        <option value="">Select your city...</option>
+        <option value="Bengaluru">Bengaluru</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="Delhi">Delhi</option>
+        <option value="Chennai">Chennai</option>
+        <option value="Hyderabad">Hyderabad</option>
+        <option value="Pune">Pune</option>
+        <option value="Kolkata">Kolkata</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <button class="btn-primary pulse" onclick="completeOnboard()">START RECYCLING →</button>
+  </div>
+</div>
+
+<!-- ──────────────────────── DASHBOARD ──────────────────────── -->
+<div id="screen-dashboard" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo"><span>RE</span>TRACE</div>
+    <div class="user-pill" onclick="showScreen('profile')">
+      <div class="user-avatar-sm" id="dash-avatar">🌿</div>
+      <span id="dash-name">You</span>
+    </div>
+  </div>
+
+  <div class="dash-content has-nav">
+    <!-- stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-pts">0</div>
+        <div class="stat-label">Points</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-items">0</div>
+        <div class="stat-label">Items</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-coupons">3</div>
+        <div class="stat-label">Coupons</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <button class="btn-exchange" onclick="showScreen('exchange')">
+      <span class="icon">♻️</span>
+      LOG NEW EXCHANGE
+    </button>
+
+    <!-- rewards preview -->
+    <div>
+      <div class="section-title">Your Rewards</div>
+      <p style="font-size:12px; color: var(--gray); margin-bottom: 12px;">Swipe to explore →</p>
+      <div class="rewards-scroll" id="rewards-scroll-preview">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- history -->
+    <div>
+      <div class="section-title">Exchange History</div>
+      <div class="history-list" id="history-list">
+        <p style="font-size:13px; color: var(--gray); text-align:center; padding: 20px 0;">No exchanges yet.<br>Make your first one! 🌿</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────────────────── EXCHANGE ──────────────────────── -->
+<div id="screen-exchange" class="screen">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('dashboard')">←</div>
+    <h2>LOG EXCHANGE</h2>
+  </div>
+
+  <div class="exchange-form has-nav">
+    <div class="field-group">
+      <label>Item Type</label>
+      <div class="item-type-grid" id="item-type-grid">
+        <button class="item-type-btn selected" data-type="T-Shirt" data-pts="40" onclick="selectType(this)">
+          <span class="type-icon">👕</span>T-Shirt / Top
+        </button>
+        <button class="item-type-btn" data-type="Jeans" data-pts="60" onclick="selectType(this)">
+          <span class="type-icon">👖</span>Jeans / Pants
+        </button>
+        <button class="item-type-btn" data-type="Jacket" data-pts="90" onclick="selectType(this)">
+          <span class="type-icon">🧥</span>Jacket / Coat
+        </button>
+        <button class="item-type-btn" data-type="Shoes" data-pts="75" onclick="selectType(this)">
+          <span class="type-icon">👟</span>Shoes
+        </button>
+        <button class="item-type-btn" data-type="Dress" data-pts="55" onclick="selectType(this)">
+          <span class="type-icon">👗</span>Dress / Skirt
+        </button>
+        <button class="item-type-btn" data-type="Accessories" data-pts="25" onclick="selectType(this)">
+          <span class="type-icon">👜</span>Accessories
+        </button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Condition</label>
+      <select id="input-condition">
+        <option value="good">Good — minor wear</option>
+        <option value="fair">Fair — visible use</option>
+        <option value="poor">Poor — heavily used</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>Quantity</label>
+      <div class="qty-row">
+        <div class="qty-btn" onclick="changeQty(-1)">−</div>
+        <div class="qty-display" id="qty-display">1</div>
+        <div class="qty-btn" onclick="changeQty(1)">+</div>
+        <div style="font-size:13px; color: var(--gray);">items</div>
+      </div>
+    </div>
+
+    <div class="points-preview">
+      <div class="pp-label">You'll Earn</div>
+      <div class="pp-num" id="pts-preview">40</div>
+      <div class="pp-sub">GREEN POINTS</div>
+    </div>
+
+    <button class="btn-primary" onclick="submitExchange()">CONFIRM EXCHANGE →</button>
+    <button class="btn-secondary" onclick="showScreen('dashboard')">Cancel</button>
+  </div>
+</div>
+
+<!-- ──────────────────────── RECEIPT ──────────────────────── -->
+<div id="screen-receipt" class="screen">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('dashboard')">←</div>
+    <h2>YOUR RECEIPT</h2>
+  </div>
+
+  <div class="receipt-container has-nav">
+    <div id="receipt-paper">
+      <div class="receipt-logo-area">
+        <div class="r-icon">♻️</div>
+        <div class="r-logo"><span>RE</span>TRACE</div>
+        <div class="r-tagline">CLOSE THE LOOP. RECLAIM THE FUTURE.</div>
+      </div>
+
+      <hr class="r-divider">
+
+      <div class="r-heading">EXCHANGE DETAILS</div>
+      <div class="r-row"><span>Receipt No.</span><span id="r-receipt-no">#RT-000001</span></div>
+      <div class="r-row"><span>Date</span><span id="r-date">—</span></div>
+      <div class="r-row"><span>Customer</span><span id="r-customer">—</span></div>
+      <div class="r-row"><span>City</span><span id="r-city">—</span></div>
+
+      <hr class="r-divider">
+
+      <div class="r-heading">ITEMS EXCHANGED</div>
+      <div id="r-items-list" class="r-items">
+        <!-- populated by JS -->
+      </div>
+
+      <hr class="r-divider">
+
+      <div class="r-row bold"><span>CONDITION</span><span id="r-condition">—</span></div>
+      <div class="r-row large">
+        <span>TOTAL POINTS EARNED</span>
+        <span id="r-total-pts" style="color: var(--green-mid);">0 pts</span>
+      </div>
+      <div class="r-row"><span>Lifetime Points</span><span id="r-lifetime">0 pts</span></div>
+
+      <hr class="r-divider">
+
+      <div class="r-heading">REWARD UNLOCKED</div>
+      <div class="r-coupon-preview">
+        <div class="cp-brand" id="r-coupon-brand">H&M</div>
+        <div class="cp-code" id="r-coupon-code">RETRACE20HM</div>
+        <div class="cp-off" id="r-coupon-off">20% OFF your next purchase</div>
+      </div>
+
+      <div class="r-qr">
+        <div class="qr-placeholder" id="qr-grid">
+          <!-- JS fills this -->
+        </div>
+        <div style="font-size: 9px; color: #888; margin-top: 6px; font-family: 'Space Mono';">Scan at store</div>
+      </div>
+
+      <div class="r-footer">
+        Thank you for closing the loop, <span id="r-footer-name">recycler</span>!<br>
+        Every item exchanged fights fast fashion.<br>
+        retrace.earth | support@retrace.earth<br>
+        <br>
+        🌿 1 item recycled = ~2.5 kg CO₂ saved
+      </div>
+    </div>
+
+    <button class="btn-download" onclick="downloadReceipt()">⬇ DOWNLOAD RECEIPT (PDF)</button>
+    <button class="btn-secondary" onclick="shareReceipt()">📤 Share Receipt</button>
+    <button class="btn-secondary" onclick="showScreen('dashboard')">← Back to Dashboard</button>
+  </div>
+</div>
+
+<!-- ──────────────────────── REWARDS ──────────────────────── -->
+<div id="screen-rewards" class="screen">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('dashboard')">←</div>
+    <h2>ALL REWARDS</h2>
+  </div>
+  <div class="rewards-grid has-nav" id="rewards-full-grid">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- ──────────────────────── PROFILE ──────────────────────── -->
+<div id="screen-profile" class="screen">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('dashboard')">←</div>
+    <h2>MY PROFILE</h2>
+  </div>
+  <div class="profile-content has-nav">
+    <div class="profile-hero">
+      <div class="profile-avatar-lg" id="profile-avatar-lg">🌿</div>
+      <h3 id="profile-name-display">Your Name</h3>
+      <div class="ph-level" id="profile-level">🌱 SPROUT</div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Account</div>
+      <div class="profile-row" onclick="openEditModal()">
+        <div class="pr-left">
+          <div class="pr-icon">✏️</div>
+          <div class="pr-label">Edit Name & Avatar</div>
+        </div>
+        <div class="pr-value" id="profile-name-short">—</div>
+      </div>
+      <div class="profile-row">
+        <div class="pr-left">
+          <div class="pr-icon">📍</div>
+          <div class="pr-label">City</div>
+        </div>
+        <div class="pr-value" id="profile-city-display">—</div>
+      </div>
+      <div class="profile-row">
+        <div class="pr-left">
+          <div class="pr-icon">🏆</div>
+          <div class="pr-label">Green Points</div>
+        </div>
+        <div class="pr-value" id="profile-pts-display" style="color: var(--green-neon);">0</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">My Impact</div>
+      <div class="impact-grid">
+        <div class="impact-item">
+          <div class="impact-label">Items Recycled <span id="imp-items">0 / 50</span></div>
+          <div class="impact-bar"><div class="impact-fill" id="imp-bar-items" style="width:0%"></div></div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-label">CO₂ Saved <span id="imp-co2">0 kg</span></div>
+          <div class="impact-bar"><div class="impact-fill" id="imp-bar-co2" style="width:0%"></div></div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-label">Water Saved <span id="imp-water">0 L</span></div>
+          <div class="impact-bar"><div class="impact-fill" id="imp-bar-water" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">Settings</div>
+      <div class="profile-row" onclick="toggleNotif(this)">
+        <div class="pr-left">
+          <div class="pr-icon">🔔</div>
+          <div class="pr-label">Notifications</div>
+        </div>
+        <div class="pr-value notif-val">On</div>
+      </div>
+      <div class="profile-row" onclick="resetApp()">
+        <div class="pr-left">
+          <div class="pr-icon">🔄</div>
+          <div class="pr-label">Reset App</div>
+        </div>
+        <div class="pr-value" style="color:#ff6b6b">Reset</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────────────────── BOTTOM NAV ──────────────────────── -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <div class="nav-item active" data-screen="dashboard" onclick="showScreen('dashboard'); setActiveNav(this)">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Home</span>
+  </div>
+  <div class="nav-item" data-screen="exchange" onclick="showScreen('exchange'); setActiveNav(this)">
+    <span class="nav-icon">♻️</span>
+    <span class="nav-label">Exchange</span>
+  </div>
+  <div class="nav-item" data-screen="rewards" onclick="showScreen('rewards'); setActiveNav(this)">
+    <span class="nav-icon">🎁</span>
+    <span class="nav-label">Rewards</span>
+  </div>
+  <div class="nav-item" data-screen="profile" onclick="showScreen('profile'); setActiveNav(this)">
+    <span class="nav-icon">👤</span>
+    <span class="nav-label">Profile</span>
+  </div>
+</nav>
+
+<!-- ──────────────────────── EDIT MODAL ──────────────────────── -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-sheet">
+    <div class="modal-title">Edit Profile</div>
+    <div class="field-group">
+      <label>Your Name</label>
+      <input type="text" id="modal-name-input" placeholder="Your name" maxlength="30">
+    </div>
+    <div class="field-group">
+      <label>Avatar</label>
+      <div class="avatar-row" id="modal-avatar-row">
+        <button class="avatar-btn" data-emoji="🌿" onclick="selectModalAvatar(this)">🌿</button>
+        <button class="avatar-btn" data-emoji="🌱" onclick="selectModalAvatar(this)">🌱</button>
+        <button class="avatar-btn" data-emoji="♻️" onclick="selectModalAvatar(this)">♻️</button>
+        <button class="avatar-btn" data-emoji="🌎" onclick="selectModalAvatar(this)">🌎</button>
+        <button class="avatar-btn" data-emoji="🍃" onclick="selectModalAvatar(this)">🍃</button>
+        <button class="avatar-btn" data-emoji="⚡" onclick="selectModalAvatar(this)">⚡</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveEdit()" style="margin-top:10px">SAVE CHANGES</button>
+    <button class="btn-secondary" onclick="closeEditModal()" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- ──────────────────────── TOAST ──────────────────────── -->
+<div id="toast"></div>
+
+</div><!-- #app -->
+
+<script>
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+let state = {
+  name: '',
+  avatar: '🌿',
+  city: '',
+  points: 0,
+  totalItems: 0,
+  exchanges: [],
+  receiptCounter: 1,
+  notifications: true,
+  selectedType: { type: 'T-Shirt', pts: 40 },
+  qty: 1,
+  lastExchange: null,
+};
+
+const REWARDS = [
+  { brand: 'H&M', emoji: '👗', discount: '20%', off: 'off next purchase', code: 'RETRACE20HM', req: 40,  color: '#e53935', locked: false },
+  { brand: 'Zara', emoji: '🛍️', discount: '15%', off: 'off ₹2000+',       code: 'ZR15RETRACE', req: 80,  color: '#1565c0', locked: false },
+  { brand: 'Myntra', emoji: '✨', discount: '₹300', off: 'cashback on app', code: 'MYN300RT',   req: 120, color: '#ff6f00', locked: false },
+  { brand: 'Fabindia', emoji: '🌺', discount: '10%', off: 'on kurtas & more', code: 'FABRT10',  req: 160, color: '#6a1b9a', locked: true  },
+  { brand: 'Levi\'s', emoji: '👖', discount: '12%', off: 'on denim',        code: 'LEVIS12RT',  req: 200, color: '#0d47a1', locked: true  },
+  { brand: 'Nykaa', emoji: '💄', discount: '₹200', off: 'off ₹999+',        code: 'NYK200RTC', req: 250, color: '#d81b60', locked: true  },
+];
+
+/* ══════════════════════════════════════
+   SCREENS
+══════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+
+  const mainScreens = ['dashboard','exchange','rewards','profile'];
+  document.getElementById('bottom-nav').style.display = mainScreens.includes(id) ? 'flex' : 'none';
+
+  if (id === 'dashboard') refreshDashboard();
+  if (id === 'profile') refreshProfile();
+  if (id === 'rewards') renderRewardsGrid();
+}
+
+function setActiveNav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ══════════════════════════════════════
+   ONBOARD
+══════════════════════════════════════ */
+let selectedAvatar = '🌿';
+function selectAvatar(btn) {
+  document.querySelectorAll('#avatar-row .avatar-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAvatar = btn.dataset.emoji;
+}
+
+function completeOnboard() {
+  const name = document.getElementById('input-name').value.trim();
+  const city = document.getElementById('input-city').value;
+  if (!name) { showToast('Please enter your name 👋'); return; }
+  if (!city) { showToast('Please select your city 📍'); return; }
+  state.name = name;
+  state.avatar = selectedAvatar;
+  state.city = city;
+  showScreen('dashboard');
+  document.getElementById('bottom-nav').style.display = 'flex';
+  showToast('Welcome, ' + name + '! 🌿');
+}
+
+/* ══════════════════════════════════════
+   EXCHANGE
+══════════════════════════════════════ */
+function selectType(btn) {
+  document.querySelectorAll('.item-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.selectedType = { type: btn.dataset.type, pts: parseInt(btn.dataset.pts) };
+  updatePtsPreview();
+}
+
+function changeQty(d) {
+  state.qty = Math.max(1, Math.min(10, state.qty + d));
+  document.getElementById('qty-display').textContent = state.qty;
+  updatePtsPreview();
+}
+
+function updatePtsPreview() {
+  const condMult = { good: 1, fair: 0.8, poor: 0.5 };
+  const cond = document.getElementById('input-condition').value;
+  const pts = Math.round(state.selectedType.pts * state.qty * condMult[cond]);
+  document.getElementById('pts-preview').textContent = pts;
+}
+document.getElementById('input-condition').addEventListener('change', updatePtsPreview);
+
+function submitExchange() {
+  const condMult = { good: 1, fair: 0.8, poor: 0.5 };
+  const condLabel = { good: 'Good', fair: 'Fair', poor: 'Poor' };
+  const cond = document.getElementById('input-condition').value;
+  const pts = Math.round(state.selectedType.pts * state.qty * condMult[cond]);
+
+  const exchange = {
+    id: state.receiptCounter++,
+    type: state.selectedType.type,
+    qty: state.qty,
+    condition: condLabel[cond],
+    pts: pts,
+    date: new Date(),
+  };
+  state.exchanges.unshift(exchange);
+  state.points += pts;
+  state.totalItems += state.qty;
+  state.lastExchange = exchange;
+
+  // reset form
+  state.qty = 1;
+  document.getElementById('qty-display').textContent = 1;
+
+  renderReceipt(exchange);
+  showScreen('receipt');
+  showToast('+' + pts + ' Green Points earned! 🎉');
+}
+
+/* ══════════════════════════════════════
+   RECEIPT
+══════════════════════════════════════ */
+function renderReceipt(ex) {
+  const d = ex.date;
+  const fmt = d => d.toString().padStart(2,'0');
+  const dateStr = `${fmt(d.getDate())}/${fmt(d.getMonth()+1)}/${d.getFullYear()}  ${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
+
+  document.getElementById('r-receipt-no').textContent = '#RT-' + String(ex.id).padStart(6,'0');
+  document.getElementById('r-date').textContent = dateStr;
+  document.getElementById('r-customer').textContent = state.name;
+  document.getElementById('r-city').textContent = state.city;
+  document.getElementById('r-condition').textContent = ex.condition;
+  document.getElementById('r-total-pts').textContent = ex.pts + ' pts';
+  document.getElementById('r-lifetime').textContent = state.points + ' pts';
+  document.getElementById('r-footer-name').textContent = state.name;
+
+  // items
+  const itemsDiv = document.getElementById('r-items-list');
+  itemsDiv.innerHTML = '';
+  for (let i = 0; i < ex.qty; i++) {
+    const row = document.createElement('div');
+    row.className = 'r-item';
+    row.innerHTML = `<span class="r-item-name">${ex.type} #${i+1}</span><span class="r-item-pts">+${Math.round(ex.pts/ex.qty)} pts</span>`;
+    itemsDiv.appendChild(row);
+  }
+
+  // reward coupon — pick best unlocked
+  const unlocked = REWARDS.filter(r => state.points >= r.req);
+  const coupon = unlocked.length ? unlocked[unlocked.length-1] : REWARDS[0];
+  document.getElementById('r-coupon-brand').textContent = coupon.brand;
+  document.getElementById('r-coupon-code').textContent = coupon.code;
+  document.getElementById('r-coupon-off').textContent = coupon.discount + ' ' + coupon.off;
+
+  // simple QR-like grid
+  renderQR();
+}
+
+function renderQR() {
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+  // deterministic pseudo-QR using receipt counter as seed
+  const seed = state.receiptCounter * 7919;
+  for (let i = 0; i < 49; i++) {
+    const cell = document.createElement('div');
+    // corner finder patterns
+    const row = Math.floor(i/7), col = i%7;
+    const isCorner = (row<2&&col<2)||(row<2&&col>4)||(row>4&&col<2);
+    const filled = isCorner || ((seed*(i+1)*31)%100 > 45);
+    cell.className = 'qr-cell' + (filled ? '' : ' empty');
+    grid.appendChild(cell);
+  }
+}
+
+async function downloadReceipt() {
+  showToast('Generating PDF...');
+  // Use browser print as PDF fallback
+  const receiptEl = document.getElementById('receipt-paper');
+  const originalBody = document.body.innerHTML;
+
+  const printWin = window.open('', '_blank');
+  if (!printWin) { showToast('Allow popups to download'); return; }
+
+  printWin.document.write(`
+    <html><head>
+    <title>RETRACE Receipt #RT-${String(state.lastExchange?.id||1).padStart(6,'0')}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: 'Space Mono', monospace; font-size: 12px; color: #2a2a1e; background: #fdfaf5; padding: 40px; max-width: 400px; margin: 0 auto; }
+      .r-logo { font-family: 'Bebas Neue', cursive; font-size: 42px; color: #1a6b2e; letter-spacing: 2px; text-align: center; }
+      .r-logo span { color: #2eb84b; }
+      .r-tagline { text-align:center; font-size:9px; color:#888; letter-spacing:2px; margin-bottom:16px; }
+      hr { border: none; border-top: 1px dashed #d4c9b0; margin: 12px 0; }
+      .r-row { display:flex; justify-content:space-between; margin-bottom:5px; }
+      .r-heading { font-size:9px; color:#888; letter-spacing:1px; margin-bottom:6px; }
+      .r-item { display:flex; justify-content:space-between; margin-bottom:4px; }
+      .r-item-pts { color: #1a6b2e; font-weight:700; }
+      .bold { font-weight:700; }
+      .large { font-size:14px; font-weight:700; }
+      .coupon { background:#f0f7f2; border:1px dashed #1a6b2e; border-radius:6px; padding:10px; text-align:center; margin-top:10px; }
+      .cp-code { font-size:16px; font-weight:700; color:#1a6b2e; letter-spacing:3px; }
+      .footer { text-align:center; font-size:9px; color:#aaa; margin-top:16px; line-height:1.7; }
+      @media print { body { padding: 20px; } }
+    </style>
+    </head><body>
+    ${receiptEl.outerHTML.replace(/style="[^"]*color:[^"]*var\(--[^)]+\)[^"]*"/g, '')}
+    <script>window.onload=()=>{window.print();}<\/script>
+    </body></html>
+  `);
+  printWin.document.close();
+  showToast('Receipt opened for download!');
+}
+
+function shareReceipt() {
+  const ex = state.lastExchange;
+  const text = `I just recycled ${ex?.qty} ${ex?.type}(s) at a RETRACE exchange point and earned ${ex?.pts} Green Points! 🌿♻️ #Retrace #CloseTheLoop`;
+  if (navigator.share) {
+    navigator.share({ title: 'My RETRACE Receipt', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+  }
+}
+
+/* ══════════════════════════════════════
+   DASHBOARD REFRESH
+══════════════════════════════════════ */
+function refreshDashboard() {
+  document.getElementById('dash-avatar').textContent = state.avatar;
+  document.getElementById('dash-name').textContent = state.name.split(' ')[0];
+  document.getElementById('stat-pts').textContent = state.points;
+  document.getElementById('stat-items').textContent = state.totalItems;
+  const unlocked = REWARDS.filter(r => state.points >= r.req).length;
+  document.getElementById('stat-coupons').textContent = unlocked;
+
+  // rewards preview
+  const scroll = document.getElementById('rewards-scroll-preview');
+  scroll.innerHTML = '';
+  REWARDS.forEach(r => {
+    const locked = state.points < r.req;
+    const card = document.createElement('div');
+    card.className = 'reward-card' + (locked ? ' locked' : '');
+    card.innerHTML = `
+      <span class="brand-emoji">${r.emoji}</span>
+      <div class="brand">${r.brand}</div>
+      <div class="discount">${r.discount}</div>
+      <div class="off">${r.off}</div>
+      <div class="expiry">Valid 30 days</div>
+    `;
+    if (!locked) card.onclick = () => { showToast('Code: ' + r.code + ' 🎉'); };
+    scroll.appendChild(card);
+  });
+
+  // history
+  const list = document.getElementById('history-list');
+  if (state.exchanges.length === 0) {
+    list.innerHTML = '<p style="font-size:13px; color: var(--gray); text-align:center; padding: 20px 0;">No exchanges yet.<br>Make your first one! 🌿</p>';
+    return;
+  }
+  list.innerHTML = '';
+  state.exchanges.slice(0,5).forEach(ex => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const d = ex.date;
+    const dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+    item.innerHTML = `
+      <div class="history-icon">♻️</div>
+      <div class="history-info">
+        <div class="h-title">${ex.qty}x ${ex.type}</div>
+        <div class="h-date">${dateStr} • ${ex.condition}</div>
+      </div>
+      <div class="history-pts">+${ex.pts}</div>
+      <div class="history-dl" onclick="viewReceipt(${ex.id})" title="View Receipt">↓</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function viewReceipt(id) {
+  const ex = state.exchanges.find(e => e.id === id);
+  if (!ex) return;
+  state.lastExchange = ex;
+  renderReceipt(ex);
+  showScreen('receipt');
+}
+
+/* ══════════════════════════════════════
+   REWARDS GRID
+══════════════════════════════════════ */
+function renderRewardsGrid() {
+  const grid = document.getElementById('rewards-full-grid');
+  grid.innerHTML = '';
+  REWARDS.forEach(r => {
+    const locked = state.points < r.req;
+    const card = document.createElement('div');
+    card.className = 'reward-full-card' + (locked ? ' locked-card' : '');
+    card.innerHTML = `
+      <div class="bg-glow" style="background:${r.color}"></div>
+      <div class="rfc-brand">${r.brand}</div>
+      <span class="rfc-emoji">${r.emoji}</span>
+      <div class="rfc-discount">${r.discount}</div>
+      <div class="rfc-off">${r.off}</div>
+      <div class="rfc-req">Needs ${r.req} pts</div>
+      ${!locked ? `<div class="rfc-code">${r.code}</div>` : ''}
+      ${locked ? '<div class="lock-overlay">🔒</div>' : ''}
+    `;
+    if (!locked) card.onclick = () => {
+      navigator.clipboard?.writeText(r.code).then(() => showToast('Code copied: ' + r.code));
+    };
+    grid.appendChild(card);
+  });
+}
+
+/* ══════════════════════════════════════
+   PROFILE
+══════════════════════════════════════ */
+function refreshProfile() {
+  document.getElementById('profile-avatar-lg').textContent = state.avatar;
+  document.getElementById('profile-name-display').textContent = state.name;
+  document.getElementById('profile-name-short').textContent = state.name;
+  document.getElementById('profile-city-display').textContent = state.city;
+  document.getElementById('profile-pts-display').textContent = state.points + ' pts';
+
+  const levels = [
+    [0,'🌱 SPROUT'],[100,'🌿 LEAF'],[250,'🌳 TREE'],[500,'🌍 GUARDIAN'],[1000,'♻️ LEGEND']
+  ];
+  const lv = [...levels].reverse().find(l => state.points >= l[0]);
+  document.getElementById('profile-level').textContent = lv[1];
+
+  const items = state.totalItems;
+  document.getElementById('imp-items').textContent = items + ' / 50';
+  document.getElementById('imp-bar-items').style.width = Math.min(100, items/50*100) + '%';
+  const co2 = (items * 2.5).toFixed(1);
+  document.getElementById('imp-co2').textContent = co2 + ' kg';
+  document.getElementById('imp-bar-co2').style.width = Math.min(100, items/50*100) + '%';
+  const water = items * 2700;
+  document.getElementById('imp-water').textContent = water.toLocaleString() + ' L';
+  document.getElementById('imp-bar-water').style.width = Math.min(100, items/50*100) + '%';
+}
+
+/* ══════════════════════════════════════
+   EDIT MODAL
+══════════════════════════════════════ */
+let modalAvatar = '';
+function openEditModal() {
+  document.getElementById('modal-name-input').value = state.name;
+  modalAvatar = state.avatar;
+  document.querySelectorAll('#modal-avatar-row .avatar-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.emoji === state.avatar);
+  });
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+function selectModalAvatar(btn) {
+  document.querySelectorAll('#modal-avatar-row .avatar-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  modalAvatar = btn.dataset.emoji;
+}
+function saveEdit() {
+  const name = document.getElementById('modal-name-input').value.trim();
+  if (!name) { showToast('Name cannot be empty'); return; }
+  state.name = name;
+  state.avatar = modalAvatar;
+  closeEditModal();
+  refreshProfile();
+  showToast('Profile updated ✓');
+}
+
+/* ══════════════════════════════════════
+   MISC
+══════════════════════════════════════ */
+function toggleNotif(row) {
+  state.notifications = !state.notifications;
+  row.querySelector('.notif-val').textContent = state.notifications ? 'On' : 'Off';
+  showToast('Notifications ' + (state.notifications ? 'enabled' : 'disabled'));
+}
+
+function resetApp() {
+  if (!confirm('Reset all data? This cannot be undone.')) return;
+  state = { name:'', avatar:'🌿', city:'', points:0, totalItems:0, exchanges:[], receiptCounter:1, notifications:true, selectedType:{type:'T-Shirt',pts:40}, qty:1, lastExchange:null };
+  document.getElementById('bottom-nav').style.display = 'none';
+  showScreen('onboard');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* init */
+document.getElementById('bottom-nav').style.display = 'none';
+</script>
+</body>
+</html>
